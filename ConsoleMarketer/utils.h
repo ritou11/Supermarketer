@@ -3,7 +3,7 @@
 #include <windows.h>
 
 /*
-** 将UTF-8字符串转化为GBK字符串
+** 将UTF-8字符串转化为GBK字符串，或反之；
 ** 参考了知乎用户Gomo Psivarh的答案思路
 ** Why？ JSON文件一般为UTF-8储存，json库也只支持UTF-8文件；
 **       而在Windows下控制台的编码时GBK的，这导致了UTF-8编
@@ -17,6 +17,15 @@ string convGBK(string& src) {
     wstring utf8_str = cvUTF8.from_bytes(src);
     string gbk_str = cvGBK.to_bytes(utf8_str);
     return gbk_str;
+}
+string convUTF8(string& src) {
+    const char* GBK_LOCALE_NAME = ".936"; //GBK在windows下的locale name
+    wstring_convert<codecvt_byname<wchar_t, char, mbstate_t>> cvGBK(new codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));
+    wstring_convert<codecvt_utf8<wchar_t>> cvUTF8;
+
+    wstring gbk_str = cvGBK.from_bytes(src);
+    string  utf8_str = cvUTF8.to_bytes(gbk_str);
+    return utf8_str;
 }
 /*
 ** 以掩码形式获取密码

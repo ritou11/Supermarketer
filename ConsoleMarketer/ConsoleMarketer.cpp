@@ -119,6 +119,7 @@ bool doLogin(User& us) {
     cout << "-登陆-" << endl;
     cout << "--用户名：";
     cin >> us.username;
+    us.username = convUTF8(us.username);
     string password = getpass("--密码：");
     //原则：密码不能明文储存，因此需要将SHA512加密后的密文与存储密文进行对比；
     //虽然本任务中未限制数据文件写入，使得系统并不安全。
@@ -143,6 +144,7 @@ void doRegister() {
     User u;
     cout << "用户名：" << endl;
     cin >> u.username;
+    u.username = convUTF8(u.username);
     u.type = CONSUMER;
     string pass = getpass("密码：", true);
     string con_pass = getpass("再次确认密码：", true);
@@ -166,7 +168,7 @@ void doRegister() {
     };
     users.push_back(user);
     saveUsers(users);
-    cout << "用户【" << u.username << "】注册成功，请妥善保管您的密码。新用户赠送" << NEW_USER_COUPONS << "礼券，已经放在您的钱包当中，请查收。祝您购物愉快！"
+    cout << "用户【" << convGBK(u.username) << "】注册成功，请妥善保管您的密码。新用户赠送" << NEW_USER_COUPONS << "礼券，已经放在您的钱包当中，请查收。祝您购物愉快！"
         << endl;
 }
 int getCmd() {
@@ -250,7 +252,7 @@ STATUS menuFDGL(User& us) {
 }
 STATUS menuAdmin(User& us) {
     int cmd = -1;
-    cout << "欢迎管理员" << us.username << "！请选择菜单中的功能编号，按回车键确认：\n";
+    cout << "欢迎管理员" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
     printf("0: 注销\n");
     printf("1: 用户管理\n");
     printf("2: 商品管理\n");
@@ -290,7 +292,7 @@ STATUS menuQB(User& us) {
 }
 STATUS menuConsumer(User& us) {
     int cmd = -1;
-    cout << "欢迎顾客" << us.username << "！请选择菜单中的功能编号，按回车键确认：\n";
+    cout << "欢迎顾客" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
     printf("0: 注销\n");
     printf("1: 市场\n");
     printf("2: 购物车\n");
