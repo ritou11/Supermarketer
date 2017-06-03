@@ -18,10 +18,24 @@
     <ClCompile Include="Login.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Register.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Login.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Register.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Login.resx">
+      <Filter>资源文件</Filter>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
