@@ -51,8 +51,8 @@ bool doLogin(User& us);
 int getCmd();
 
 void saveUsers(json& u);
-void saveGoods(json& g);
-void saveBranches(vector<json>& bs);
+void saveGoods(vector<json>& g);
+void saveBranches(json& bs);
 
 STATUS menu1(User& us);
 
@@ -68,7 +68,6 @@ STATUS menuSC(User& us);
 STATUS menuGUC(User& us);
 STATUS menuQB(User& us);
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
-
 
 int main()
 {
@@ -289,7 +288,7 @@ void listUsers() {
     cout << "----用户列表----" << endl;
     for (int i = 0; i < users.size(); i++) {
         cout << "||";
-        cout << "用户名：" << users[i]["username"].get<string>() << "||";
+        cout << "用户名：" << convGBK(users[i]["username"].get<string>()) << "||";
         cout << "类型：" << ((users[i]["auth"].get<int>() > 1) ? "管理员" : "顾客") << "||";
         cout << "钱包余额：" << users[i]["wallet"]["money"].get<float>() << "||";
         cout << "礼券余额：" << users[i]["wallet"]["coupons"].get<float>() << "||";
@@ -303,9 +302,9 @@ void listBranches() {
     cout << "----分店列表----" << endl;
     for (int i = 0; i < branches.size(); i++) {
         cout << "||";
-        cout << "编号：" << branches[i]["id"].get<string>() << "||";
-        cout << "分店名：" << branches[i]["name"].get<string>() << "||";
-        cout << "描述：" << branches[i]["description"].get<string>() << "||";
+        cout << "编号：" << convGBK(branches[i]["id"].get<string>()) << "||";
+        cout << "分店名：" << convGBK(branches[i]["name"].get<string>()) << "||";
+        cout << "描述：" << convGBK(branches[i]["description"].get<string>()) << "||";
         cout << endl;
     }
 }

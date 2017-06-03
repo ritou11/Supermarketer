@@ -12,6 +12,7 @@
 #include <tchar.h>
 #include <string>
 #include <vector>
+#include <codecvt>
 #include "contrib\json.hpp"
 #include "contrib\sha512.h"
 

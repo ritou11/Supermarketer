@@ -2,6 +2,16 @@
 #include "stdafx.h"
 #include <windows.h>
 
+string convGBK(string& src) {
+    const char* GBK_LOCALE_NAME = ".936"; //GBKÔÚwindowsÏÂµÄlocale name
+    wstring_convert<codecvt_byname<wchar_t, char, mbstate_t>> cvGBK(new codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));
+    wstring_convert<codecvt_utf8<wchar_t>> cvUTF8;
+
+    wstring utf8_str = cvUTF8.from_bytes(src);
+    string gbk_str = cvGBK.to_bytes(utf8_str);
+    return gbk_str;
+}
+
 string getpass(const char *prompt, bool show_asterisk = true)
 {
     const char BACKSPACE = 8;
