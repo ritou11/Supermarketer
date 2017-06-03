@@ -2,11 +2,38 @@
     {
         "username":"ritou11",
         "password":"ba3253876aed6bc22d4a6ff53d8406c6ad864195ed144ab5c87621b6c233b548baeae6956df346ec8c17f5ea10f35ee3cbc514797ed7ddd3145464e2a0bab413",
-        "auth": 10
+        "auth": 10,
+        "cart": [
+            {
+                "id":"g100001",
+                "num":5
+            },
+            {
+                "id":"g100002",
+                "num":2
+            }
+        ],
+        "wallet":{
+            "money":100.5,
+            "coupons":10
+        },
+        "purchase_log":[
+            {
+                "id":"g100002",
+                "num":2,
+                "total":35.6
+            }
+        ]
     },
     {
         "username":"kriscurry",
         "password":"1233543",
-        "auth": 0
+        "auth": 0,
+        "cart":[],
+        "wallet":{
+            "money":10.9,
+            "coupons":12
+        },
+        "purchase_log":[]
     }
 ]

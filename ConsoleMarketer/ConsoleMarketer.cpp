@@ -10,6 +10,7 @@
 ** 标记版本信息，用于BANNER显示
 */
 #define VERSION "V1.0"
+//************************************************************
 
 /*************************************************************
 ** 数据文件
@@ -19,7 +20,6 @@
 #define USER_FILE "user.json"
 #define GOODS_FILE "goods.json"
 #define BRANCH_FILE "branch.json"
-#define CART_FILE "cart.json"
 //************************************************************
 
 /*************************************************************
@@ -40,8 +40,19 @@ enum STATUS {
 };
 
 void printBanner();
+void listUsers();
+void listGoods();
+void listBranch();
+
+void loadUsers(json& u);
+void loadGoods(json& g);
+void loadBranch(json& b);
 
 bool doLogin(User& us);
+
+void saveUsers(json& u);
+void saveGoods(json& g);
+void saveBranch(json& b);
 
 STATUS menu1(User& us);
 
@@ -50,7 +61,7 @@ STATUS menuYHGL(User& us);
 STATUS menuSPXXGL(User& us);
 STATUS menuKCGL(User& us);
 STATUS menuFDGL(User& us);
-STATUS(*adminMenus[])(User&) = { menuYHGL,menuSPXXGL, menuKCGL,menuFDGL };
+STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPXXGL, menuKCGL, menuFDGL };
 
 STATUS menuConsumer(User& us);
 STATUS menuSC(User& us);
@@ -58,12 +69,6 @@ STATUS menuGUC(User& us);
 STATUS menuQB(User& us);
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 
-void listUsers();
-
-void loadUsers(json& u);
-void loadGoods(json& g);
-void loadCart(json& c);
-void loadBranch(json& b);
 
 int main()
 {
@@ -155,7 +160,6 @@ STATUS menu1(User& us) {
     }
     return LOOP;
 }
-
 STATUS menuYHGL(User& us) {
     int cmd = -1;
     printf("----用户管理----\n");
@@ -166,19 +170,15 @@ STATUS menuYHGL(User& us) {
     printf("3: 库存管理\n");
     printf("4: 分店管理\n");
 }
-
 STATUS menuSPXXGL(User& us) {
     return EXIT;
 }
-
 STATUS menuKCGL(User& us) {
     return EXIT;
 }
-
 STATUS menuFDGL(User& us) {
     return EXIT;
 }
-
 STATUS menuAdmin(User& us) {
     int cmd = -1;
     printf("欢迎管理员%s！请选择菜单中的功能编号，按回车键确认：\n", us.username);
@@ -211,19 +211,15 @@ STATUS menuAdmin(User& us) {
     }
     return LOOP;
 }
-
 STATUS menuSC(User& us) {
     return EXIT;
 }
-
 STATUS menuGUC(User& us) {
     return EXIT;
 }
-
 STATUS menuQB(User& us) {
     return EXIT;
 }
-
 STATUS menuConsumer(User& us) {
     int cmd = -1;
     printf("欢迎顾客%s！请选择菜单中的功能编号，按回车键确认：\n", us.username);
@@ -254,7 +250,13 @@ STATUS menuConsumer(User& us) {
     }
     return LOOP;
 }
+
 void listUsers() {
+
+}
+void listGoods() {
+}
+void listBranch() {
 
 }
 
@@ -263,7 +265,14 @@ void loadUsers(json& u) {
     fin >> u;
     fin.close();
 }
-
 void loadGoods(json& g) {
 
+}
+void loadBranch(json& b) {
+}
+void saveUsers(json& u) {
+}
+void saveGoods(json& g) {
+}
+void saveBranch(json& b) {
 }
