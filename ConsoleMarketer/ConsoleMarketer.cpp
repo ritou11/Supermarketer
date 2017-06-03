@@ -139,14 +139,35 @@ bool doLogin(User& us) {
     }
     return flag;
 }
+
+bool checkPass(string pass) {
+    if (pass.length() <= 6) return false;
+    int upper = 0, lower = 0, num = 0, other = 0;
+    for (int i = 0; i < pass.length(); i++) {
+        if (pass[i] >= 'a'&&pass[i] <= 'z') lower++;
+        else if (pass[i] >= 'A' && pass[i] <= 'Z') upper++;
+        else if (pass[i] >= '0' && pass[i] <= '9') num++;
+        else other++;
+    }
+    return (upper > 0) + (lower > 0) + (num > 0) + (other > 0) >= 3;
+    // 四类字符至少包含三类
+}
+
 void doRegister() {
     cout << "-注册新用户-" << endl;
     User u;
-    cout << "用户名：" << endl;
+    cout << "用户名：";
     cin >> u.username;
     u.username = convUTF8(u.username);
     u.type = CONSUMER;
-    string pass = getpass("密码：", true);
+    string pass;
+    while (1) {
+        pass = getpass("密码：", true);
+        if (!checkPass(pass)) {
+            cout << "密码太简单，请重新输入！" << endl;
+        }
+        else break;
+    }
     string con_pass = getpass("再次确认密码：", true);
     if (con_pass != pass) {
         cout << "两次输入的密码不一致，注册失败！" << endl;
