@@ -7,6 +7,13 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <tchar.h>
+#include <string>
+#include <vector>
+#include "contrib\json.hpp"
+#include "contrib\sha512.h"
+
 using namespace std;
+using json = nlohmann::json;
