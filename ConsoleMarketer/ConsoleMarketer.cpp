@@ -6,10 +6,11 @@
 #include "User.h"
 
 /*************************************************************
-** 程序版本
-** 标记版本信息，用于BANNER显示
+** 程序配置
+** 声明宏以便于改变程序中的部分配置。
 */
 #define VERSION "V1.0"
+#define NEW_USER_COUPONS 10
 //************************************************************
 
 /*************************************************************
@@ -69,6 +70,7 @@ STATUS menuGUC(User& us);
 STATUS menuQB(User& us);
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 
+// 主函数，程序入口点
 int main()
 {
     int cmd = -1;
@@ -114,10 +116,12 @@ void printBanner() {
 }
 
 bool doLogin(User& us) {
-    cout << "-登陆" << endl;
+    cout << "-登陆-" << endl;
     cout << "--用户名：";
     cin >> us.username;
     string password = getpass("--密码：");
+    //原则：密码不能明文储存，因此需要将SHA512加密后的密文与存储密文进行对比；
+    //虽然本任务中未限制数据文件写入，使得系统并不安全。
     string sha512pwd = sha512(password);
     bool flag = false;
     for (int i = 0; i < users.size(); i++) {
@@ -133,6 +137,37 @@ bool doLogin(User& us) {
         }
     }
     return flag;
+}
+void doRegister() {
+    cout << "-注册新用户-" << endl;
+    User u;
+    cout << "用户名：" << endl;
+    cin >> u.username;
+    u.type = CONSUMER;
+    string pass = getpass("密码：", true);
+    string con_pass = getpass("再次确认密码：", true);
+    if (con_pass != pass) {
+        cout << "两次输入的密码不一致，注册失败！" << endl;
+        return;
+    }
+    pass = sha512(pass);
+    json user = {
+        {"username",u.username},
+        {"password",pass},
+        {"auth", u.type == ADMIN ? 5 : 0},
+        {"cart", json::array()},
+        {"wallet",
+        {
+            {"money", 0},
+            {"coupons", NEW_USER_COUPONS}
+        }
+        },
+        {"purchase_log",json::array()}
+    };
+    users.push_back(user);
+    saveUsers(users);
+    cout << "用户【" << u.username << "】注册成功，请妥善保管您的密码。新用户赠送" << NEW_USER_COUPONS << "礼券，已经放在您的钱包当中，请查收。祝您购物愉快！"
+        << endl;
 }
 int getCmd() {
     int cmd;
@@ -158,7 +193,7 @@ STATUS menu1(User& us) {
         }
     }
     else if (cmd == 1) {
-        return EXIT;
+        doRegister();
     }
     else {
         printf("指令输入有误！\n");
@@ -330,6 +365,9 @@ void loadBranches(json& bs) {
     fin.close();
 }
 void saveUsers(json& u) {
+    ofstream fout(USER_FILE);
+    fout << setw(4) << u << endl;
+    fout.close();
 }
 void saveGoods(vector<json>& g) {
 }
