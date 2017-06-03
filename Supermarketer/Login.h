@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils.h"
+
 namespace Supermarketer {
 
     using namespace System;
@@ -179,7 +180,8 @@ namespace Supermarketer {
     private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
         String^ username = txtUsername->Text;
         String^ md5password = Utils::getMD5String(txtPassword->Text);
-
+        IO::StreamReader ^userfile = gcnew IO::StreamReader("user.json");
+        String ^content = userfile->ReadToEnd();
     }
     };
 }
