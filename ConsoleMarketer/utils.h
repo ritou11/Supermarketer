@@ -39,5 +39,7 @@ string getpass(const char *prompt, bool show_asterisk = true)
         }
     }
     cout << endl;
+    SetConsoleMode(hIn, con_mode);
+    
     return password;
 }
