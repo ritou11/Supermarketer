@@ -28,9 +28,8 @@
 ** 适用于数据规模较小时
 */
 json users;
-json goods;
-json carts;
-json branchs;
+vector<json> goods;
+json branches;
 //************************************************************
 
 // 菜单函数返回的可能状态
@@ -42,17 +41,18 @@ enum STATUS {
 void printBanner();
 void listUsers();
 void listGoods();
-void listBranch();
+void listBranches();
 
 void loadUsers(json& u);
-void loadGoods(json& g);
-void loadBranch(json& b);
+void loadGoods(vector<json>& g);
+void loadBranches(json& b);
 
 bool doLogin(User& us);
+int getCmd();
 
 void saveUsers(json& u);
 void saveGoods(json& g);
-void saveBranch(json& b);
+void saveBranches(vector<json>& bs);
 
 STATUS menu1(User& us);
 
@@ -78,6 +78,7 @@ int main()
         printBanner();
 
         loadUsers(users);
+        loadBranches(branches);
         loadGoods(goods);
 
         User us;
@@ -134,14 +135,19 @@ bool doLogin(User& us) {
     }
     return flag;
 }
-
+int getCmd() {
+    int cmd;
+    cout << "输入功能编号：";
+    cin >> cmd;
+    return cmd;
+}
 STATUS menu1(User& us) {
     int cmd = -1;
     printf("请选择菜单中的功能编号，按回车键确认：\n");
     printf("0: 登录\n");
     printf("1: 注册\n");
 
-    cin >> cmd;
+    cmd = getCmd();
 
     if (cmd == 0) {
         if (doLogin(us)) {
@@ -160,35 +166,63 @@ STATUS menu1(User& us) {
     }
     return LOOP;
 }
+
 STATUS menuYHGL(User& us) {
     int cmd = -1;
-    printf("----用户管理----\n");
+    printf("--用户管理--\n");
     listUsers();
     printf("0: 返回\n");
-    printf("1: 用户管理\n");
-    printf("2: 商品信息管理\n");
-    printf("3: 库存管理\n");
-    printf("4: 分店管理\n");
-}
-STATUS menuSPXXGL(User& us) {
+    printf("1: 添加用户\n");
+    printf("2: 删除用户\n");
+    printf("3: 修改密码\n");
+    cmd = getCmd();
     return EXIT;
 }
+
+STATUS menuSPXXGL(User& us) {
+    int cmd = -1;
+    printf("--商品管理--\n");
+    listGoods();
+    printf("0: 返回\n");
+    printf("1: 添加商品\n");
+    printf("2: 下架商品\n");
+    printf("3: 修改商品\n");
+    printf("4: 分店货物\n");
+    cmd = getCmd();
+    return EXIT;
+}
+
 STATUS menuKCGL(User& us) {
+    int cmd = -1;
+    printf("--库存管理--\n");
+    listBranches();
+    printf("0: 返回\n");
+    printf("1: 进货\n");
+    printf("2: 清仓\n");
+    printf("3: 检查\n");
+    cmd = getCmd();
+    return EXIT;
     return EXIT;
 }
 STATUS menuFDGL(User& us) {
+    int cmd = -1;
+    printf("--分店管理--\n");
+    listBranches();
+    printf("0: 返回\n");
+    printf("1: 添加分店\n");
+    printf("2: 关闭分店\n");
+    cmd = getCmd();
     return EXIT;
 }
 STATUS menuAdmin(User& us) {
     int cmd = -1;
-    printf("欢迎管理员%s！请选择菜单中的功能编号，按回车键确认：\n", us.username);
+    cout << "欢迎管理员" << us.username << "！请选择菜单中的功能编号，按回车键确认：\n";
     printf("0: 注销\n");
     printf("1: 用户管理\n");
-    printf("2: 商品信息管理\n");
+    printf("2: 商品管理\n");
     printf("3: 库存管理\n");
     printf("4: 分店管理\n");
-
-    cin >> cmd;
+    cmd = getCmd();
 
     STATUS(*nextMenu)(User&);
     switch (cmd) {
@@ -222,13 +256,13 @@ STATUS menuQB(User& us) {
 }
 STATUS menuConsumer(User& us) {
     int cmd = -1;
-    printf("欢迎顾客%s！请选择菜单中的功能编号，按回车键确认：\n", us.username);
+    cout << "欢迎顾客" << us.username << "！请选择菜单中的功能编号，按回车键确认：\n";
     printf("0: 注销\n");
     printf("1: 市场\n");
     printf("2: 购物车\n");
     printf("3: 钱包\n");
 
-    cin >> cmd;
+    cmd = getCmd();
 
     STATUS(*nextMenu)(User&);
     switch (cmd) {
@@ -252,12 +286,28 @@ STATUS menuConsumer(User& us) {
 }
 
 void listUsers() {
-
+    cout << "----用户列表----" << endl;
+    for (int i = 0; i < users.size(); i++) {
+        cout << "||";
+        cout << "用户名：" << users[i]["username"].get<string>() << "||";
+        cout << "类型：" << ((users[i]["auth"].get<int>() > 1) ? "管理员" : "顾客") << "||";
+        cout << "钱包余额：" << users[i]["wallet"]["money"].get<float>() << "||";
+        cout << "礼券余额：" << users[i]["wallet"]["coupons"].get<float>() << "||";
+        cout << "购物次数：" << users[i]["purchase_log"].size() << "||";
+        cout << endl;
+    }
 }
 void listGoods() {
 }
-void listBranch() {
-
+void listBranches() {
+    cout << "----分店列表----" << endl;
+    for (int i = 0; i < branches.size(); i++) {
+        cout << "||";
+        cout << "编号：" << branches[i]["id"].get<string>() << "||";
+        cout << "分店名：" << branches[i]["name"].get<string>() << "||";
+        cout << "描述：" << branches[i]["description"].get<string>() << "||";
+        cout << endl;
+    }
 }
 
 void loadUsers(json& u) {
@@ -265,14 +315,24 @@ void loadUsers(json& u) {
     fin >> u;
     fin.close();
 }
-void loadGoods(json& g) {
-
+void loadGoods(vector<json>& g) {
+    json j;
+    g.clear();
+    for (int i = 0; i < branches.size(); i++) {
+        std::ifstream fin(branches[i]["id"].get<string>().append(".json"));
+        fin >> j;
+        g.push_back(j);
+        fin.close();
+    }
 }
-void loadBranch(json& b) {
+void loadBranches(json& bs) {
+    std::ifstream fin(BRANCH_FILE);
+    fin >> bs;
+    fin.close();
 }
 void saveUsers(json& u) {
 }
-void saveGoods(json& g) {
+void saveGoods(vector<json>& g) {
 }
-void saveBranch(json& b) {
+void saveBranches(json& bs) {
 }

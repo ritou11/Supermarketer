@@ -1,0 +1,20 @@
+[
+{
+    "id":"B0001",
+    "name":"笑蛤蛤五道口分店",
+    "description":"坐落在宇宙中心。",
+    "open":true
+},
+{
+    "id":"B0002",
+    "name":"笑蛤蛤望京分店",
+    "description":"这里常年活跃着真正的粉丝。",
+    "open":true
+},
+{
+    "id":"B0003",
+    "name":"笑蛤蛤华莱士分店",
+    "description":"从这里可以买到很多西方国家的货物。",
+    "open":true
+}
+]
