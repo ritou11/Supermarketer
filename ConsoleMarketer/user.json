@@ -57,16 +57,5 @@
             "coupons": 10,
             "money": 0
         }
-    },
-    {
-        "auth": 0,
-        "cart": [],
-        "password": "63cb20b48c28de5d507772ab7361cd50af50bf6e0fceecfb5eb5ca805771264cbbe984189005f47984a76c686c29e42b2a5aa6ce65a79591a9c04caec7166a58",
-        "purchase_log": [],
-        "username": "lht",
-        "wallet": {
-            "coupons": 10,
-            "money": 0
-        }
     }
 ]

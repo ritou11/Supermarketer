@@ -68,9 +68,9 @@ STATUS menuSC(User& us);
 STATUS menuGUC(User& us);
 STATUS menuQB(User& us);
 
-STATUS menuAddUser(User& us);
-STATUS menuDeleteUser(User& us);
-STATUS menuEditPwd(User& us);
+STATUS doAddUser(User& us);
+STATUS doDeleteUser(User& us);
+STATUS doEditPwd(User& us);
 
 STATUS menuAddGoods(User& us);
 STATUS menuDownGoods(User& us);
@@ -95,7 +95,7 @@ STATUS menuAdjust(User& us);
 STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPGL, menuKCGL, menuFDGL };
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 STATUS(*admin_con_menus[])(User&) = {menuAdmin, menuConsumer};
-STATUS(*yhglMenus[])(User&) = { menuAddUser, menuDeleteUser, menuEditPwd };
+STATUS(*yhglMenus[])(User&) = { doAddUser, doDeleteUser, doEditPwd };
 STATUS(*spglMenu[])(User&) = { menuAddGoods ,menuDownGoods ,menuEditGoods ,menuBranchGoods };
 STATUS(*kcglMenu[])(User&) = { menuAddStorage, menuClearStorage, menuCheckStorage};
 STATUS(*fdglMenu[])(User&) = { menuAddBranch , menuStopBranch };
@@ -164,7 +164,6 @@ bool doLogin(User& us) {
     }
     return flag;
 }
-
 bool checkPass(string pass) {
     if (pass.length() <= 6) return false;
     int upper = 0, lower = 0, num = 0, other = 0;
@@ -177,14 +176,13 @@ bool checkPass(string pass) {
     return (upper > 0) + (lower > 0) + (num > 0) + (other > 0) >= 3;
     // 四类字符至少包含三类
 }
-
-void doRegister() {
+void doRegister(USER_TYPE ut) {
     cout << "-注册新用户-" << endl;
     User u;
     cout << "用户名：";
     cin >> u.username;
     u.username = convUTF8(u.username);
-    u.type = CONSUMER;
+    u.type = ut;
     string pass;
     while (1) {
         pass = getpass("密码：", true);
@@ -217,9 +215,10 @@ void doRegister() {
     cout << "用户【" << convGBK(u.username) << "】注册成功，请妥善保管您的密码。新用户赠送" << NEW_USER_COUPONS << "礼券，已经放在您的钱包当中，请查收。祝您购物愉快！"
         << endl;
 }
+
 int getCmd() {
     int cmd;
-    cout << "输入功能编号：";
+    cout << "输入编号：";
     cin >> cmd;
     // 清空输入区，避免错误输入持续作用
     cin.clear();
@@ -244,9 +243,71 @@ STATUS menu1(User& us) {
         }
     }
     else if (cmd == 1) {
-        doRegister();
+        doRegister(CONSUMER);
     }
     else {
+        printf("指令输入有误！\n");
+    }
+    return LOOP;
+}
+
+STATUS menuAdmin(User& us) {
+    int cmd = -1;
+    cout << "欢迎管理员" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
+    printf("0: 注销\n");
+    printf("1: 用户管理\n");
+    printf("2: 商品管理\n");
+    printf("3: 库存管理\n");
+    printf("4: 分店管理\n");
+    cmd = getCmd();
+
+    STATUS(*nextMenu)(User&);
+    switch (cmd) {
+    case 0://Logout
+        return EXIT;
+        break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        nextMenu = adminMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
+    default:
+        printf("指令输入有误！\n");
+    }
+    return LOOP;
+}
+STATUS menuConsumer(User& us) {
+    int cmd = -1;
+    cout << "欢迎顾客" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
+    printf("0: 注销\n");
+    printf("1: 市场\n");
+    printf("2: 购物车\n");
+    printf("3: 钱包\n");
+
+    cmd = getCmd();
+
+    STATUS(*nextMenu)(User&);
+    switch (cmd) {
+    case 0://Logout
+        return EXIT;
+        break;
+    case 1:
+    case 2:
+    case 3:
+        nextMenu = adminMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
+    default:
         printf("指令输入有误！\n");
     }
     return LOOP;
@@ -261,16 +322,22 @@ STATUS menuYHGL(User& us) {
     printf("2: 删除用户\n");
     printf("3: 修改密码\n");
     cmd = getCmd();
+
+    STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0:
         return EXIT;
     case 1:case 2:case 3:
-
+        nextMenu = yhglMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
         break;
     default:
         printf("指令输入错误！\n");
     }
-    // TODO: User management
     return LOOP;
 }
 STATUS menuSPGL(User& us) {
@@ -334,37 +401,6 @@ STATUS menuFDGL(User& us) {
     }
     return LOOP;
 }
-STATUS menuAdmin(User& us) {
-    int cmd = -1;
-    cout << "欢迎管理员" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
-    printf("0: 注销\n");
-    printf("1: 用户管理\n");
-    printf("2: 商品管理\n");
-    printf("3: 库存管理\n");
-    printf("4: 分店管理\n");
-    cmd = getCmd();
-
-    STATUS(*nextMenu)(User&);
-    switch (cmd) {
-    case 0://Logout
-        return EXIT;
-        break;
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-        nextMenu = adminMenus[cmd - 1];
-        while (1) {
-            // 下一级菜单
-            STATUS s = nextMenu(us);
-            if (s == EXIT) break;
-        }
-        break;
-    default:
-        printf("指令输入有误！\n");
-    }
-    return LOOP;
-}
 
 STATUS menuSC(User& us) {
     int cmd = -1;
@@ -393,92 +429,122 @@ STATUS menuQB(User& us) {
     // TODO wallet
     return EXIT;
 }
-STATUS menuConsumer(User& us) {
-    int cmd = -1;
-    cout << "欢迎顾客" << convGBK(us.username) << "！请选择菜单中的功能编号，按回车键确认：\n";
-    printf("0: 注销\n");
-    printf("1: 市场\n");
-    printf("2: 购物车\n");
-    printf("3: 钱包\n");
 
-    cmd = getCmd();
-
-    STATUS(*nextMenu)(User&);
-    switch (cmd) {
-    case 0://Logout
+STATUS doAddUser(User& us) {
+    cout << "----添加用户----" << endl;
+    cout << "请输入添加的类型(0: 管理员，1：消费者)";
+    int cmd = getCmd();
+    if (cmd > 1 || cmd < 0) {
+        cout <<"类型编号输入错误！"<<endl;
         return EXIT;
-        break;
-    case 1:
-    case 2:
-    case 3:
-        nextMenu = adminMenus[cmd - 1];
-        while (1) {
-            // 下一级菜单
-            STATUS s = nextMenu(us);
-            if (s == EXIT) break;
+    }    
+    doRegister(cmd ? CONSUMER:ADMIN);
+    return EXIT;
+}
+STATUS doDeleteUser(User& us) {
+    cout << "----删除用户----" << endl;
+    listUsers();
+    cout << "输入删除的用户名：";
+    string s;
+    cin >> s;
+    s = convUTF8(s);
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["username"].get<string>() == s) {
+            cout << "确认删除" << convGBK(s) << "吗？(0: 否，1：是)：" << endl;
+            int cmd = getCmd();
+            if (cmd != 1) {
+                cout << "放弃！" << endl;
+                break;
+            }
+            users.erase(i);
+            break;
         }
-        break;
-    default:
-        printf("指令输入有误！\n");
     }
-    return LOOP;
+    saveUsers(users);
+    return EXIT;
 }
+STATUS doEditPwd(User& us) {
+    cout << "----修改密码----" << endl;
+    string s;
+    cout << "输入修改密码的用户名：";
+    cin >> s;
+    s = convUTF8(s);
 
-STATUS menuAddUser(User& us) {
-
-}
-STATUS menuDeleteUser(User& us) {
-
-}
-STATUS menuEditPwd(User& us) {
-
+    int index = -1;
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["username"].get<string>() == s) {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0) {
+        cout << "用户名错误！" << endl;
+        return EXIT;
+    }
+    string pass;
+    while (1) {
+        pass = getpass("密码：", true);
+        if (!checkPass(pass)) {
+            cout << "密码太简单，请重新输入！" << endl;
+        }
+        else break;
+    }
+    string con_pass = getpass("再次确认密码：", true);
+    if (con_pass != pass) {
+        cout << "两次输入的密码不一致，注册失败！" << endl;
+        return EXIT;
+    }
+    pass = sha512(pass);
+    users[index]["password"] = pass;
+    saveUsers(users);
+    return EXIT;
 }
 
 STATUS menuAddGoods(User& us) {
-
+    return EXIT;
 }
 STATUS menuDownGoods(User& us) {
-
+    return EXIT;
 }
 STATUS menuEditGoods(User& us) {
-
+    return EXIT;
 }
 STATUS menuBranchGoods(User& us) {
-
+    return EXIT;
 }
 
 STATUS menuAddStorage(User& us) {
-
+    return EXIT;
 }
 STATUS menuClearStorage(User& us) {
-
+    return EXIT;
 }
 STATUS menuCheckStorage(User& us) {
-
+    return EXIT;
 }
 
 STATUS menuAddBranch(User& us) {
-
+    return EXIT;
 }
 STATUS menuStopBranch(User& us) {
-
+    return EXIT;
 }
 
 STATUS menuBuy(User& us) {
-
+    return EXIT;
 }
 STATUS menuSearch(User& us) {
-
+    return EXIT;
 }
 
 STATUS menuPay(User& us) {
-
+    return EXIT;
 }
 STATUS menuDelete(User& us) {
-
+    return EXIT;
 }
 STATUS menuAdjust(User& us) {
-
+    return EXIT;
 }
 
 void listUsers() {
