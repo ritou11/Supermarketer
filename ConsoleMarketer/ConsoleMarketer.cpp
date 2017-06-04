@@ -59,7 +59,7 @@ STATUS menu1(User& us);
 
 STATUS menuAdmin(User& us);
 STATUS menuYHGL(User& us);
-STATUS menuSPXXGL(User& us);
+STATUS menuSPGL(User& us);
 STATUS menuKCGL(User& us);
 STATUS menuFDGL(User& us);
 
@@ -68,10 +68,39 @@ STATUS menuSC(User& us);
 STATUS menuGUC(User& us);
 STATUS menuQB(User& us);
 
+STATUS menuAddUser(User& us);
+STATUS menuDeleteUser(User& us);
+STATUS menuEditPwd(User& us);
+
+STATUS menuAddGoods(User& us);
+STATUS menuDownGoods(User& us);
+STATUS menuEditGoods(User& us);
+STATUS menuBranchGoods(User& us);
+
+STATUS menuAddStorage(User& us);
+STATUS menuClearStorage(User& us);
+STATUS menuCheckStorage(User& us);
+
+STATUS menuAddBranch(User& us);
+STATUS menuStopBranch(User& us);
+
+STATUS menuBuy(User& us);
+STATUS menuSearch(User& us);
+
+STATUS menuPay(User& us);
+STATUS menuDelete(User& us);
+STATUS menuAdjust(User& us);
+
 // 使用函数指针，简化相似的菜单操作
-STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPXXGL, menuKCGL, menuFDGL };
+STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPGL, menuKCGL, menuFDGL };
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 STATUS(*admin_con_menus[])(User&) = {menuAdmin, menuConsumer};
+STATUS(*yhglMenus[])(User&) = { menuAddUser, menuDeleteUser, menuEditPwd };
+STATUS(*spglMenu[])(User&) = { menuAddGoods ,menuDownGoods ,menuEditGoods ,menuBranchGoods };
+STATUS(*kcglMenu[])(User&) = { menuAddStorage, menuClearStorage, menuCheckStorage};
+STATUS(*fdglMenu[])(User&) = { menuAddBranch , menuStopBranch };
+STATUS(*gucMenu[])(User&) = { menuPay , menuDelete , menuAdjust };
+STATUS(*scMenu[])(User&) = { menuBuy , menuSearch };
 
 // 主函数，程序入口点
 int main()
@@ -232,11 +261,19 @@ STATUS menuYHGL(User& us) {
     printf("2: 删除用户\n");
     printf("3: 修改密码\n");
     cmd = getCmd();
-    // TODO: User management
-    return EXIT;
-}
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:
 
-STATUS menuSPXXGL(User& us) {
+        break;
+    default:
+        printf("指令输入错误！\n");
+    }
+    // TODO: User management
+    return LOOP;
+}
+STATUS menuSPGL(User& us) {
     int cmd = -1;
     printf("--商品管理--\n");
     listGoods();
@@ -246,10 +283,17 @@ STATUS menuSPXXGL(User& us) {
     printf("3: 修改商品\n");
     printf("4: 分店货物\n");
     cmd = getCmd();
-    // TODO Goods management
-    return EXIT;
-}
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:case 4:
 
+        break;
+    default:
+        printf("指令输入错误！\n");
+    }
+    return LOOP;
+}
 STATUS menuKCGL(User& us) {
     int cmd = -1;
     printf("--库存管理--\n");
@@ -259,8 +303,16 @@ STATUS menuKCGL(User& us) {
     printf("2: 清仓\n");
     printf("3: 检查\n");
     cmd = getCmd();
-    // TODO storage management
-    return EXIT;
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:
+
+        break;
+    default:
+        printf("指令输入错误！\n");
+    }
+    return LOOP;
 }
 STATUS menuFDGL(User& us) {
     int cmd = -1;
@@ -271,8 +323,16 @@ STATUS menuFDGL(User& us) {
     printf("2: 关闭分店\n");
     printf("3: 全部分店\n");
     cmd = getCmd();
-    // TODO branches management
-    return EXIT;
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:
+
+        break;
+    default:
+        printf("指令输入错误！\n");
+    }
+    return LOOP;
 }
 STATUS menuAdmin(User& us) {
     int cmd = -1;
@@ -305,9 +365,25 @@ STATUS menuAdmin(User& us) {
     }
     return LOOP;
 }
+
 STATUS menuSC(User& us) {
-    // TODO market
-    return EXIT;
+    int cmd = -1;
+    printf("--市场--\n");
+    listGoods();
+    printf("0: 返回\n");
+    printf("1: 购买\n");
+    printf("2: 搜索\n");
+    cmd = getCmd();
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:
+
+    default:
+        printf("指令输入有误！\n");
+    }
+    return LOOP;
+
 }
 STATUS menuGUC(User& us) {
     // TODO cart
@@ -346,6 +422,63 @@ STATUS menuConsumer(User& us) {
         printf("指令输入有误！\n");
     }
     return LOOP;
+}
+
+STATUS menuAddUser(User& us) {
+
+}
+STATUS menuDeleteUser(User& us) {
+
+}
+STATUS menuEditPwd(User& us) {
+
+}
+
+STATUS menuAddGoods(User& us) {
+
+}
+STATUS menuDownGoods(User& us) {
+
+}
+STATUS menuEditGoods(User& us) {
+
+}
+STATUS menuBranchGoods(User& us) {
+
+}
+
+STATUS menuAddStorage(User& us) {
+
+}
+STATUS menuClearStorage(User& us) {
+
+}
+STATUS menuCheckStorage(User& us) {
+
+}
+
+STATUS menuAddBranch(User& us) {
+
+}
+STATUS menuStopBranch(User& us) {
+
+}
+
+STATUS menuBuy(User& us) {
+
+}
+STATUS menuSearch(User& us) {
+
+}
+
+STATUS menuPay(User& us) {
+
+}
+STATUS menuDelete(User& us) {
+
+}
+STATUS menuAdjust(User& us) {
+
 }
 
 void listUsers() {
