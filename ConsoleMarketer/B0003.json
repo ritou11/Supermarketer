@@ -1,38 +1,62 @@
 [
-{
-    "id":"G100000000001",
-    "name":"黑框眼镜",
-    "isbn":"6925792510015",
-    "price":1,
-    "source":"上海",
-    "storage":2589,
-    "last7days_sell":[123,548,11,236,215,12,220],
-    "today_sell":0,
-    "description":"戴上眼镜会念诗。",
-    "avaliable":true
-},
-{
-    "id":"G100000000002",
-    "name":"白色衬衫",
-    "isbn":"692579251001A",
-    "price":10,
-    "source":"上海",
-    "storage":3520,
-    "last7days_sell":[53,27,11,23,13,12,86],
-    "today_sell":0,
-    "description":"女孩子们都喜欢穿白衬衫的阳光少年。",
-    "avaliable":true
-},
-{
-    "id":"G100000000003",
-    "name":"长裤",
-    "isbn":"692579251001B",
-    "price":100,
-    "source":"上海",
-    "storage":128,
-    "last7days_sell":[56,35,11,10,52,12,11],
-    "today_sell":2,
-    "description":"头胸裤裤鞋。",
-    "avaliable":true
-}
+    {
+        "avaliable": true,
+        "description": "戴上眼镜会念诗。",
+        "id": "G300000000001",
+        "isbn": "6925792510015",
+        "last7days_sell": [
+            123,
+            548,
+            11,
+            236,
+            215,
+            12,
+            220
+        ],
+        "name": "黑框眼镜",
+        "price": 1,
+        "source": "上海",
+        "storage": 2589,
+        "today_sell": 0
+    },
+    {
+        "avaliable": true,
+        "description": "女孩子们都喜欢穿白衬衫的阳光少年。",
+        "id": "G300000000002",
+        "isbn": "692579251001A",
+        "last7days_sell": [
+            53,
+            27,
+            11,
+            23,
+            13,
+            12,
+            86
+        ],
+        "name": "白色衬衫",
+        "price": 10,
+        "source": "上海",
+        "storage": 3520,
+        "today_sell": 0
+    },
+    {
+        "avaliable": true,
+        "description": "头胸裤裤鞋。",
+        "id": "G300000000003",
+        "isbn": "692579251001B",
+        "last7days_sell": [
+            56,
+            35,
+            11,
+            10,
+            52,
+            12,
+            11
+        ],
+        "name": "长裤",
+        "price": 100,
+        "source": "上海",
+        "storage": 128,
+        "today_sell": 2
+    }
 ]
