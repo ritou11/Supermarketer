@@ -1,0 +1,14 @@
+[
+    {
+        "avaliable": true,
+        "description": "hahaha",
+        "id": "G400001",
+        "isbn": "1083329",
+        "last7days_sell": [],
+        "name": "Mymymy",
+        "price": 100.0,
+        "source": "Beijing",
+        "storage": 0,
+        "today_sell": 0
+    }
+]

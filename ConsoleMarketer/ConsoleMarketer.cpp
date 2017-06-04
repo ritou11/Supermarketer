@@ -11,6 +11,7 @@
 */
 #define VERSION "V1.0"
 #define NEW_USER_COUPONS 10
+#define ALERT_LINE 100
 //************************************************************
 
 /*************************************************************
@@ -81,12 +82,12 @@ STATUS doDownGoods(User& us);
 STATUS doEditGoods(User& us);
 STATUS doBranchGoods(User& us);
 
-STATUS menuAddStorage(User& us);
-STATUS menuClearStorage(User& us);
-STATUS menuCheckStorage(User& us);
+STATUS doAddStorage(User& us);
+STATUS doClearStorage(User& us);
+STATUS doCheckStorage(User& us);
 
-STATUS menuAddBranch(User& us);
-STATUS menuStopBranch(User& us);
+STATUS doAddBranch(User& us);
+STATUS doStopBranch(User& us);
 
 STATUS menuBuy(User& us);
 STATUS menuSearch(User& us);
@@ -101,8 +102,8 @@ STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 STATUS(*admin_con_menus[])(User&) = { menuAdmin, menuConsumer };
 STATUS(*yhglMenus[])(User&) = { doAddUser, doDeleteUser, doEditPwd };
 STATUS(*spglMenus[])(User&) = { doAddGoods ,doDownGoods ,doEditGoods ,doBranchGoods };
-STATUS(*kcglMenus[])(User&) = { menuAddStorage, menuClearStorage, menuCheckStorage };
-STATUS(*fdglMenus[])(User&) = { menuAddBranch , menuStopBranch };
+STATUS(*kcglMenus[])(User&) = { doAddStorage, doClearStorage, doCheckStorage };
+STATUS(*fdglMenus[])(User&) = { doAddBranch , doStopBranch };
 STATUS(*gucMenus[])(User&) = { menuPay , menuDelete , menuAdjust };
 STATUS(*scMenus[])(User&) = { menuBuy , menuSearch };
 
@@ -390,17 +391,22 @@ STATUS menuSPGL(User& us) {
 STATUS menuKCGL(User& us) {
     int cmd = -1;
     printf("--库存管理--\n");
-    listBranches(false);
     printf("0: 返回\n");
     printf("1: 进货\n");
     printf("2: 清仓\n");
     printf("3: 检查\n");
     cmd = getCmd();
+    STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0:
         return EXIT;
     case 1:case 2:case 3:
-
+        nextMenu = kcglMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
         break;
     default:
         printf("指令输入错误！\n");
@@ -416,11 +422,21 @@ STATUS menuFDGL(User& us) {
     printf("2: 关闭分店\n");
     printf("3: 全部分店\n");
     cmd = getCmd();
+    STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0:
         return EXIT;
-    case 1:case 2:case 3:
-
+    case 1:case 2: 
+        nextMenu = fdglMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
+    case 3:
+        listBranches(true);
+        system("pause");
         break;
     default:
         printf("指令输入错误！\n");
@@ -548,6 +564,7 @@ STATUS doAddGoods(User& us) {
     Point p = findGoods(id, "id");
     if (p.i >= 0 || p.j >= 0) {
         cout << "编号重复！" << endl;
+        return EXIT;
     }
 
     cout << "请输入商品价格：";
@@ -641,7 +658,6 @@ STATUS doEditGoods(User& us) {
     saveGoods(goods);
     return EXIT;
 }
-
 STATUS doBranchGoods(User& us) {
     cout << "----下架商品----" << endl;
     listBranches(false);
@@ -658,20 +674,118 @@ STATUS doBranchGoods(User& us) {
     return EXIT;
 }
 
-STATUS menuAddStorage(User& us) {
+STATUS doAddStorage(User& us) {
+    cout << "----增加库存----" << endl;
+    listGoods(-1);
+    string id;
+    cout << "输入要进货的商品编号：";
+    cin >> id;
+    Point p = findGoods(id, "id");
+    if (p.i < 0 || p.j < 0) {
+        cout << "商品编号有误！" << endl;
+        return EXIT;
+    }
+    cout << "商品" << convGBK(goods[p.i][p.j]["name"].get<string>()) << "现有库存" << goods[p.i][p.j]["storage"].get<int>() << "，输入进货数量：" << endl;
+    int add;
+    cin >> add;
+    if (add < 0) {
+        cout << "清仓请切换至清仓菜单！" << endl;
+        return EXIT;
+    }
+    goods[p.i][p.j]["storage"] = goods[p.i][p.j]["storage"].get<int>() + add;
+    saveGoods(goods);
+
     return EXIT;
 }
-STATUS menuClearStorage(User& us) {
+STATUS doClearStorage(User& us) {
+    cout << "----减少库存----" << endl;
+    listGoods(-1);
+    string id;
+    cout << "输入要清仓的商品编号：";
+    cin >> id;
+    Point p = findGoods(id, "id");
+    if (p.i < 0 || p.j < 0) {
+        cout << "商品编号有误！" << endl;
+        return EXIT;
+    }
+    cout << "商品" << convGBK(goods[p.i][p.j]["name"].get<string>()) << "现有库存" << goods[p.i][p.j]["storage"].get<int>() << "，输入减少数量：" << endl;
+    int add;
+    cin >> add;
+    if (add < 0) {
+        cout << "进货请切换至进货菜单！" << endl;
+        return EXIT;
+    }
+    goods[p.i][p.j]["storage"] = goods[p.i][p.j]["storage"].get<int>() - add;
+    saveGoods(goods);
+
     return EXIT;
 }
-STATUS menuCheckStorage(User& us) {
+STATUS doCheckStorage(User& us) {
+    cout << "----库存检查----" << endl;
+    for (int i = 0; i < branches.size(); i++) {
+        if (branches[i]["open"].get<bool>() == false) continue;
+        cout << "--分店【" << convGBK(branches[i]["name"].get<string>()) << "】库存检查--" << endl;
+        int alert_cnt = 0;
+        for (int j = 0; j < goods[i].size(); j++) {
+            bool alert = goods[i][j]["storage"].get<int>() < ALERT_LINE;
+            if (alert) cout << "!!!";
+            cout << "||" << convGBK(goods[i][j]["id"].get<string>()) << "||" << convGBK(goods[i][j]["name"].get<string>());
+            cout << "||" << goods[i][j]["storage"].get<int>() << "||";
+            if (alert) cout << "!!!(警告！库存过少！)" << endl;
+            else
+                cout << endl;
+            alert_cnt += alert;
+        }
+        if (alert_cnt > 0) cout << "共" << alert_cnt << "件商品存货不足！" << endl;
+    }
     return EXIT;
 }
 
-STATUS menuAddBranch(User& us) {
+STATUS doAddBranch(User& us) {
+    cout << "----添加分店----" << endl;
+    string id, name, description;
+    cout << "请输入要添加的分店编号：";
+    cin >> id;
+    id = convUTF8(id);
+    if (findBranch(id) >= 0) {
+        cout << "编号重复！" << endl;
+        return EXIT;
+    }
+    cout << "请输入要添加的分店名称：";
+    cin >> name;
+    name = convUTF8(name);
+    cout << "请输入分店描述：";
+    cin >> description; 
+    description = convUTF8(description);
+
+    json branch = {
+        { "id",id },
+        { "name",name },
+        { "description", description },
+        { "open",true }
+    };
+
+    branches.push_back(branch);
+    goods.push_back(json::array());
+
+    saveBranches(branches);
+    saveGoods(goods);
+
     return EXIT;
 }
-STATUS menuStopBranch(User& us) {
+STATUS doStopBranch(User& us) {
+    cout << "----关停分店----" << endl;
+    string id;
+    cout << "输入要关停的分店编号(再次关闭可开启分店)：";
+    cin >> id;
+    id = convUTF8(id);
+    int index = findBranch(id);
+    if ( index < 0) {
+        cout << "编号有误！" << endl;
+        return EXIT;
+    }
+    branches[index]["open"] = !(branches[index]["open"].get<bool>());
+    saveBranches(branches);
     return EXIT;
 }
 
@@ -712,6 +826,7 @@ void listGoods(int bi) {
     }
     else {
         if (bi > goods.size() || bi < 0) return;
+        if (branches[bi]["open"].get<bool>() == false) return;
         cout << "----分店【" << convGBK(branches[bi]["name"].get<string>()) << "】商品情况----" << endl;
         for (int i = 0; i < goods[bi].size(); i++) if (goods[bi][i]["avaliable"].get<bool>()) {
             cout << "||";
@@ -773,5 +888,7 @@ void saveGoods(vector<json>& g) {
     }
 }
 void saveBranches(json& bs) {
-    // TODO save branches
+    ofstream fout(BRANCH_FILE);
+    fout << setw(4) << bs << endl;
+    fout.close();
 }
