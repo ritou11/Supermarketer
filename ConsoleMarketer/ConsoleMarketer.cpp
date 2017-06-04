@@ -39,9 +39,13 @@ enum STATUS {
     LOOP
 };
 
+struct Point {
+    int i, j;
+};
+
 void printBanner();
 void listUsers();
-void listGoods();
+void listGoods(int bi);
 void listBranches(bool all);
 
 void loadUsers(json& u);
@@ -72,10 +76,10 @@ STATUS doAddUser(User& us);
 STATUS doDeleteUser(User& us);
 STATUS doEditPwd(User& us);
 
-STATUS menuAddGoods(User& us);
-STATUS menuDownGoods(User& us);
-STATUS menuEditGoods(User& us);
-STATUS menuBranchGoods(User& us);
+STATUS doAddGoods(User& us);
+STATUS doDownGoods(User& us);
+STATUS doEditGoods(User& us);
+STATUS doBranchGoods(User& us);
 
 STATUS menuAddStorage(User& us);
 STATUS menuClearStorage(User& us);
@@ -96,11 +100,11 @@ STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPGL, menuKCGL, menuFDGL };
 STATUS(*consumerMenus[])(User&) = { menuSC, menuGUC, menuQB };
 STATUS(*admin_con_menus[])(User&) = {menuAdmin, menuConsumer};
 STATUS(*yhglMenus[])(User&) = { doAddUser, doDeleteUser, doEditPwd };
-STATUS(*spglMenu[])(User&) = { menuAddGoods ,menuDownGoods ,menuEditGoods ,menuBranchGoods };
-STATUS(*kcglMenu[])(User&) = { menuAddStorage, menuClearStorage, menuCheckStorage};
-STATUS(*fdglMenu[])(User&) = { menuAddBranch , menuStopBranch };
-STATUS(*gucMenu[])(User&) = { menuPay , menuDelete , menuAdjust };
-STATUS(*scMenu[])(User&) = { menuBuy , menuSearch };
+STATUS(*spglMenus[])(User&) = { doAddGoods ,doDownGoods ,doEditGoods ,doBranchGoods };
+STATUS(*kcglMenus[])(User&) = { menuAddStorage, menuClearStorage, menuCheckStorage};
+STATUS(*fdglMenus[])(User&) = { menuAddBranch , menuStopBranch };
+STATUS(*gucMenus[])(User&) = { menuPay , menuDelete , menuAdjust };
+STATUS(*scMenus[])(User&) = { menuBuy , menuSearch };
 
 // 主函数，程序入口点
 int main()
@@ -214,6 +218,21 @@ void doRegister(USER_TYPE ut) {
     saveUsers(users);
     cout << "用户【" << convGBK(u.username) << "】注册成功，请妥善保管您的密码。新用户赠送" << NEW_USER_COUPONS << "礼券，已经放在您的钱包当中，请查收。祝您购物愉快！"
         << endl;
+}
+int findBranch(string id) {
+    for (int i = 0; i < branches.size(); i++) {
+        if (branches[i]["name"].get<string>() == id)
+            return i;
+    }
+    return -1;
+}
+Point findGoods(string value, string field) {
+    for (int i = 0; i < goods.size(); i++) {
+        for (int j = 0; j < goods[i].size(); j++) {
+            if (goods[i][j][field].get<string>() == value) return Point{i,j};
+        }
+    }
+    return Point{-1,-1};
 }
 
 int getCmd() {
@@ -343,18 +362,25 @@ STATUS menuYHGL(User& us) {
 STATUS menuSPGL(User& us) {
     int cmd = -1;
     printf("--商品管理--\n");
-    listGoods();
+    listGoods(-1);
     printf("0: 返回\n");
     printf("1: 添加商品\n");
     printf("2: 下架商品\n");
     printf("3: 修改商品\n");
     printf("4: 分店货物\n");
     cmd = getCmd();
+
+    STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0:
         return EXIT;
     case 1:case 2:case 3:case 4:
-
+        nextMenu = spglMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
         break;
     default:
         printf("指令输入错误！\n");
@@ -405,7 +431,7 @@ STATUS menuFDGL(User& us) {
 STATUS menuSC(User& us) {
     int cmd = -1;
     printf("--市场--\n");
-    listGoods();
+    listGoods(-1);
     printf("0: 返回\n");
     printf("1: 购买\n");
     printf("2: 搜索\n");
@@ -500,16 +526,131 @@ STATUS doEditPwd(User& us) {
     return EXIT;
 }
 
-STATUS menuAddGoods(User& us) {
+STATUS doAddGoods(User& us) {
+    cout << "----添加商品----" << endl;
+    string branch, id, name, isbn, source, description;
+    float price;
+    listBranches(false);
+    cout << "请输入添加到的分店编号：";
+    cin >> branch;
+    int branchIndex = findBranch(branch);
+    if (branchIndex < 0) {
+        cout << "分店编号输入有误！" << endl;
+        return EXIT;
+    }
+    cout << "请输入商品编号，商品名称，商品代码，产地，以空格或换行分割：\n";
+    cin >> id >> name >> isbn >> source;
+    id = convUTF8(id);
+    name = convUTF8(name);
+    isbn = convUTF8(isbn);
+    source = convUTF8(source);
+
+    Point p = findGoods(id, "id");
+    if (p.i >= 0 || p.j >= 0) {
+        cout << "编号重复！" << endl;
+    }
+    
+    cout << "请输入商品价格：";
+    cin >> price;
+    cout << "请输入商品描述：";
+    cin >> description;
+
+    json good = {
+        { "id",id },
+        { "name",name },
+        { "isbn", isbn },
+        { "source", source },
+        { "price", price},
+        { "last7days_sell",json::array() },
+        {"today_sell",0},
+        {"description",description},
+        {"avaliable",true}
+    };
+
+    goods[branchIndex].push_back(good);
+    saveGoods(goods);
+
     return EXIT;
 }
-STATUS menuDownGoods(User& us) {
+STATUS doDownGoods(User& us) {
+    cout << "----下架商品----" << endl;
+    listGoods(-1);
+    string id;
+    cout << "输入要下架的商品编号：";
+    cin >> id;
+    Point p = findGoods(id,"id");
+    if (p.i < 0 || p.j < 0) {
+        cout << "商品编号有误！"<<endl;
+        return EXIT;
+    }
+    goods[p.i][p.j]["avaliable"] = false;
     return EXIT;
 }
-STATUS menuEditGoods(User& us) {
+STATUS doEditGoods(User& us) {
+    cout << "----修改商品----" << endl;
+    listGoods(-1);
+    string id;
+    cout << "输入要修改的商品编号：";
+    cin >> id;
+    Point p = findGoods(id, "id");
+    if (p.i < 0 || p.j < 0) {
+        cout << "商品编号有误！" << endl;
+        return EXIT;
+    }
+    cin >> "输入要修改的信息编号（0：名称，1：代码，2：产地:3：价格，4：描述）：";
+    int cmd = getCmd();
+    string s;
+    switch (cmd) {
+    case 0:
+        cout << "输入名称：";
+        cin >> s;
+        s = convUTF8(s);
+        goods[p.i][p.j]["name"] = s;
+        break;
+    case 1:
+        cout << "输入代码：";
+        cin >> s;
+        s = convUTF8(s);
+        goods[p.i][p.j]["isbn"] = s;
+        break;
+    case 2:
+        cout << "输入产地：";
+        cin >> s;
+        s = convUTF8(s);
+        goods[p.i][p.j]["source"] = s;
+        break;
+    case 3:
+        cout << "输入价格：";
+        float price;
+        cin >> price;
+        goods[p.i][p.j]["price"] = price;
+        break;
+    case 4:
+        cout << "输入描述：";
+        cin >> s;
+        s = convUTF8(s);
+        goods[p.i][p.j]["description"] = s;
+        break;
+    default:
+        cout << "指令有误！" << endl;
+        return EXIT;
+    }
+    saveGoods(goods);
     return EXIT;
 }
-STATUS menuBranchGoods(User& us) {
+
+STATUS doBranchGoods(User& us) {
+    cout << "----下架商品----" << endl;
+    listBranches(false);
+    string id;
+    cout << "输入分店编号：";
+    cin >> id;
+    int index = findBranch(id);
+    if (index < 0) {
+        cout << "分店编号有误！" << endl;
+        return EXIT;
+    }
+    listGoods(index);
     return EXIT;
 }
 
@@ -559,8 +700,26 @@ void listUsers() {
         cout << endl;
     }
 }
-void listGoods() {
-    // TODO List Goods
+void listGoods(int bi) {
+    if (bi < 0) {
+        for (int i = 0; i < goods.size(); i++) {
+            listGoods(i);
+        }
+    }
+    else {
+        if (bi > goods.size() || bi < 0) return;
+        cout <<"----分店【" <<convGBK(branches[bi]["name"].get<string>())<<"】商品情况----" << endl;
+        for (int i = 0; i < goods[bi].size(); i++) {
+            cout << "||";
+            cout << "编号：" << convGBK(goods[bi][i]["id"].get<string>()) << "||";
+            cout << "名称：" << convGBK(goods[bi][i]["name"].get<string>()) << "||";
+            cout << "代码：" << convGBK(goods[bi][i]["isbn"].get<string>()) << "||";
+            cout << "产地：" << convGBK(branches[i]["source"].get<string>()) << "||";
+            cout << "价格：" << (branches[i]["price"].get<double>()) << "||";
+            cout << "库存：" << (branches[i]["storage"].get<int>()) << "||";
+            cout << endl;
+        }
+    }
 }
 void listBranches(bool all) {
     cout << "----分店列表----" << endl;
@@ -602,7 +761,12 @@ void saveUsers(json& u) {
     fout.close();
 }
 void saveGoods(vector<json>& g) {
-    // TODO save goods
+    if (g.size() != branches.size()) return;
+    for (int i = 0; i < g.size(); i++) {
+        ofstream fout(branches[i]["id"].get<string>().append(".json"));
+        fout << setw(4) << g[i] << endl;
+        fout.close();
+    }
 }
 void saveBranches(json& bs) {
     // TODO save branches
