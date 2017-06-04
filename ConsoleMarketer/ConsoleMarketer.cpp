@@ -45,6 +45,11 @@ struct Point {
 };
 
 void printBanner();
+int findBranch(string id);
+Point findGoods(string value, string field);
+int findUser(string username);
+vector<Point> findAllGoods(string value, string field);
+
 void listUsers();
 void listGoods(int bi);
 void listBranches(bool all);
@@ -89,8 +94,8 @@ STATUS doCheckStorage(User& us);
 STATUS doAddBranch(User& us);
 STATUS doStopBranch(User& us);
 
-STATUS menuBuy(User& us);
-STATUS menuSearch(User& us);
+STATUS doBuy(User& us);
+STATUS doSearch(User& us);
 
 STATUS menuPay(User& us);
 STATUS menuDelete(User& us);
@@ -105,7 +110,7 @@ STATUS(*spglMenus[])(User&) = { doAddGoods ,doDownGoods ,doEditGoods ,doBranchGo
 STATUS(*kcglMenus[])(User&) = { doAddStorage, doClearStorage, doCheckStorage };
 STATUS(*fdglMenus[])(User&) = { doAddBranch , doStopBranch };
 STATUS(*gucMenus[])(User&) = { menuPay , menuDelete , menuAdjust };
-STATUS(*scMenus[])(User&) = { menuBuy , menuSearch };
+STATUS(*scMenus[])(User&) = { doBuy , doSearch };
 
 // 主函数，程序入口点
 int main()
@@ -187,6 +192,10 @@ void doRegister(USER_TYPE ut) {
     cout << "用户名：";
     cin >> u.username;
     u.username = convUTF8(u.username);
+    if (findUser(u.username)>0) {
+        cout << "用户名重复！" << endl;
+        return;
+    }
     u.type = ut;
     string pass;
     while (1) {
@@ -234,6 +243,22 @@ Point findGoods(string value, string field) {
         }
     }
     return Point{ -1,-1 };
+}
+vector<Point> findAllGoods(string value, string field) {
+    vector<Point> pl;
+    for (int i = 0; i < goods.size(); i++) {
+        for (int j = 0; j < goods[i].size(); j++) {
+            if (goods[i][j][field].get<string>() == value) pl.push_back(Point{ i,j });
+        }
+    }
+    return pl;
+}
+int findUser(string username) {
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["username"].get<string>() == username)
+            return i;
+    }
+    return -1;
 }
 
 int getCmd() {
@@ -317,10 +342,8 @@ STATUS menuConsumer(User& us) {
     case 0://Logout
         return EXIT;
         break;
-    case 1:
-    case 2:
-    case 3:
-        nextMenu = adminMenus[cmd - 1];
+    case 1:case 2:case 3:
+        nextMenu = consumerMenus[cmd - 1];
         while (1) {
             // 下一级菜单
             STATUS s = nextMenu(us);
@@ -452,11 +475,18 @@ STATUS menuSC(User& us) {
     printf("1: 购买\n");
     printf("2: 搜索\n");
     cmd = getCmd();
+    STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0:
         return EXIT;
     case 1:case 2:
-
+        nextMenu = scMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
     default:
         printf("指令输入有误！\n");
     }
@@ -789,10 +819,90 @@ STATUS doStopBranch(User& us) {
     return EXIT;
 }
 
-STATUS menuBuy(User& us) {
+STATUS doBuy(User& us) {
+    cout << "----添加到购物车----" << endl;
+    cout << "请输入您要购买的商品编号：";
+    string id;
+    Point gp;
+    cin >> id;
+    id = convUTF8(id);
+    gp = findGoods(id,"id");
+    if (gp.i < 0 || gp.j < 0) {
+        cout << "别淘气！没有这个商品！" << endl;
+        return EXIT;
+    }
+    float price = goods[gp.i][gp.j]["price"].get<float>();
+    cout << "亲要买几个呢？：" << endl;
+    int goodCnt;
+    cin >> goodCnt;
+    if (goodCnt < 0) {
+        cout << "别淘气~我们不收货哦~" << endl;
+        return EXIT;
+    }
+    else if (goodCnt == 0) return EXIT;
+    cout << "购买【" << goodCnt << "】个【"<< convGBK(goods[gp.i][gp.j]["name"].get<string>()) <<"】，总计" << goodCnt*price << "元，添加到购物车吗？(0: 取消；1：确认)：";
+    int cmd = getCmd();
+    if (cmd != 1) {
+        cout << "放弃添加！" << endl;
+        return EXIT;
+    }
+
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+
+    json cc = {
+        {"id", id},
+        {"num", goodCnt}
+    };
+    users[uid]["cart"].push_back(cc);
+
+    saveUsers(users);
     return EXIT;
 }
-STATUS menuSearch(User& us) {
+STATUS doSearch(User& us) {
+    cout << "----搜索商品----" << endl;
+    string field, value;
+    cout << "输入搜索依据编号（0：编号，1：名称，2：代码）：";
+    int cmd = getCmd();
+    string s;
+    switch (cmd) {
+    case 0:
+        field = "id";
+        break;
+    case 1:
+        field = "name";
+        break;
+    case 2:
+        field = "isbn";
+        break;
+    default:
+        cout << "指令有误！" << endl;
+        return EXIT;
+    }
+    cout << "目标值：";
+    cin >> value;
+    value = convUTF8(value);
+    vector<Point> res = findAllGoods(value, field);
+    for (int i = 0; i < res.size(); i++) {
+        Point p = res[i];
+        if (p.i < 0 || p.j < 0) {
+            cout << "商品编号有误！" << endl;
+            return EXIT;
+        }
+        cout << "商品所在分店：" << convGBK(branches[p.i]["name"].get<string>()) << endl;
+        cout << "||";
+        cout << "编号：" << convGBK(goods[p.i][p.j]["id"].get<string>()) << "||";
+        cout << "名称：" << convGBK(goods[p.i][p.j]["name"].get<string>()) << "||";
+        cout << "代码：" << convGBK(goods[p.i][p.j]["isbn"].get<string>()) << "||";
+        cout << "产地：" << convGBK(goods[p.i][p.j]["source"].get<string>()) << "||";
+        cout << "价格：" << (goods[p.i][p.j]["price"].get<double>()) << "||";
+        cout << "库存：" << (goods[p.i][p.j]["storage"].get<int>()) << "||";
+        cout << endl;
+    }
+    if (res.size() <= 0) {
+        cout << "没有找到这样的商品！" << endl;
+    }
+    system("pause");
     return EXIT;
 }
 

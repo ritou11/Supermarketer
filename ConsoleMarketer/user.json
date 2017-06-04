@@ -3,18 +3,18 @@
         "auth": 10,
         "cart": [
             {
-                "id": "G100000000001",
+                "id": "G10001",
                 "num": 5
             },
             {
-                "id": "G100000000002",
+                "id": "G10002",
                 "num": 2
             }
         ],
         "password": "ba3253876aed6bc22d4a6ff53d8406c6ad864195ed144ab5c87621b6c233b548baeae6956df346ec8c17f5ea10f35ee3cbc514797ed7ddd3145464e2a0bab413",
         "purchase_log": [
             {
-                "id": "g100002",
+                "id": "G10002",
                 "num": 2,
                 "total": 35.6
             }
@@ -23,17 +23,6 @@
         "wallet": {
             "coupons": 10,
             "money": 100.5
-        }
-    },
-    {
-        "auth": 0,
-        "cart": [],
-        "password": "1233543",
-        "purchase_log": [],
-        "username": "kriscurry",
-        "wallet": {
-            "coupons": 12,
-            "money": 10.9
         }
     },
     {
@@ -53,6 +42,22 @@
         "password": "3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2",
         "purchase_log": [],
         "username": "黄珈颖",
+        "wallet": {
+            "coupons": 10,
+            "money": 0
+        }
+    },
+    {
+        "auth": 0,
+        "cart": [
+            {
+                "id": "G10001",
+                "num": 10
+            }
+        ],
+        "password": "436f84ad40df669ff6b8968b00748afc75e4b76788441a0a5c66d381876ecfd0a845f33f0ce3ba2cf9d17280ac04a837bef7a5ff1660d161a536fce28eeaf1fe",
+        "purchase_log": [],
+        "username": "kriscurry",
         "wallet": {
             "coupons": 10,
             "money": 0
