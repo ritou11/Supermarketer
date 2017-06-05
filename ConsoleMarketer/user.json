@@ -56,17 +56,11 @@
             }
         ],
         "password": "436f84ad40df669ff6b8968b00748afc75e4b76788441a0a5c66d381876ecfd0a845f33f0ce3ba2cf9d17280ac04a837bef7a5ff1660d161a536fce28eeaf1fe",
-        "purchase_log": [
-            {
-                "id": "G10001",
-                "num": 10,
-                "total": 10.0
-            }
-        ],
+        "purchase_log": [],
         "username": "kriscurry",
         "wallet": {
-            "coupons": 0.0,
-            "money": 0.0
+            "coupons": 10.0,
+            "money": 10.0
         }
     }
 ]

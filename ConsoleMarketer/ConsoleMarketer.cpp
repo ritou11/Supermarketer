@@ -55,6 +55,7 @@ void listGoods(int bi);
 void listBranches(bool all);
 void listLogs(User& u);
 void listCart(User& u);
+void listWallet(User& u);
 
 void loadUsers(json& u);
 void loadGoods(vector<json>& g);
@@ -528,8 +529,32 @@ STATUS menuGUC(User& us) {
     return LOOP;
 }
 STATUS menuQB(User& us) {
-    // TODO wallet
-    return EXIT;
+    int cmd = -1;
+    printf("--钱包--\n");
+    cout << "规则说明：礼券可以当做现金使用，在付款时，优先支付礼券；" << endl;
+    cout << "---------退款时，全部金额返还到礼券。" << endl;
+    listWallet(us);
+    printf("0: 返回\n");
+    printf("1: 充值\n");
+    printf("2: 排名\n");
+    printf("3: 退货\n");
+    cmd = getCmd();
+    STATUS(*nextMenu)(User&);
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:
+        nextMenu = qbMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
+    default:
+        printf("指令输入有误！\n");
+    }
+    return LOOP;
 }
 
 STATUS doAddUser(User& us) {
@@ -1038,12 +1063,65 @@ STATUS doAdjust(User& us) {
 }
 
 STATUS doTopup(User& us) {
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+    float money = users[uid]["wallet"]["money"].get<float>();
+
+    cout << "----充值----" << endl;
+    cout << "当前钱包余额：" << money << "元" << endl;
+    cout << "亲要充值多少元？：";
+    float topup;
+    cin >> topup;
+    if (topup < 0) {
+        cout << "别淘气~不能取出现金哦~" << endl;
+        return EXIT;
+    }
+    else if (topup == 0) {
+        return EXIT;
+    }
+    cout << "跳转到第三方支付平台，处理中......" << endl
+        << "..................."
+        << "..................."
+        << "..................."
+        << "..................."
+        << "..................."
+        << "支付成功（模拟）！"
+        << endl;       
+    users[uid]["wallet"]["money"] = money + topup;
+    saveUsers(users);
     return EXIT;
 }
 STATUS doRank(User& us) {
     return EXIT;
 }
 STATUS doSendback(User& us) {
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+    float coupons = users[uid]["wallet"]["coupons"].get<float>();
+    json logs = users[uid]["purchase_log"];
+
+    cout << "----退货----" << endl;
+    listLogs(us);
+    cout << "请输入您退货的订单编号：" << endl;
+    int cid = getCmd();
+    if (cid < 0 || cid >= logs.size()) {
+        cout << "编号有误！" << endl;
+        return EXIT;
+    }
+    string id = logs[cid]["id"].get<string>();
+    Point gp;
+    gp = findGoods(id, "id");
+    if (gp.i < 0 || gp.j < 0 || goods[gp.i][gp.j]["avaliable"].get<bool>() == false) {
+        cout << "商品下架啦，不能再退货咯~" << endl;
+        return EXIT;
+    }
+
+    users[uid]["wallet"]["coupons"] = coupons + logs[cid]["total"].get<float>();
+    goods[gp.i][gp.j]["storage"] = goods[gp.i][gp.j]["storage"].get<int>() + logs[cid]["num"].get<int>();
+    users[uid]["purchase_log"].erase(cid);
+
+    saveUsers(users);
+    saveGoods(goods);
     return EXIT;
 }
 
@@ -1127,6 +1205,14 @@ void listCart(User& u) {
         cout << "总价：" << cart[i]["num"].get<int>() * goods[p.i][p.j]["price"].get<float>() << "||";
         cout << endl;
     }
+}
+void listWallet(User& u) {
+    int uid = findUser(u.username);
+    if (uid < 0) return;
+    json wallet = users[uid]["wallet"];
+    cout << "用户【" << convGBK(u.username) << "】:" << endl
+         << "礼券" << wallet["coupons"].get<float>() << "元" << endl
+         << "现金" << wallet["money"].get<float>() << "元" << endl;
 }
 
 void loadUsers(json& u) {
