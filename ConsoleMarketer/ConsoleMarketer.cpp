@@ -44,6 +44,11 @@ struct Point {
     int i, j;
 };
 
+struct ToSort {
+    string s;
+    float value;
+};
+
 void printBanner();
 int findBranch(string id);
 Point findGoods(string value, string field);
@@ -56,6 +61,11 @@ void listBranches(bool all);
 void listLogs(User& u);
 void listCart(User& u);
 void listWallet(User& u);
+
+void sort(vector<ToSort>& ts);
+void sortTimes();
+void sortTotal();
+void sortMoney();
 
 void loadUsers(json& u);
 void loadGoods(vector<json>& g);
@@ -532,7 +542,7 @@ STATUS menuQB(User& us) {
     int cmd = -1;
     printf("--钱包--\n");
     cout << "规则说明：礼券可以当做现金使用，在付款时，优先支付礼券；" << endl;
-    cout << "---------退款时，全部金额返还到礼券。" << endl;
+    cout << "         退款时，全部金额返还到礼券。" << endl;
     listWallet(us);
     printf("0: 返回\n");
     printf("1: 充值\n");
@@ -1092,6 +1102,29 @@ STATUS doTopup(User& us) {
     return EXIT;
 }
 STATUS doRank(User& us) {
+    int cmd = -1;
+    printf("----排名----\n");
+    printf("0: 返回\n");
+    printf("1: 购物次数\n");
+    printf("2: 购物金额\n");
+    printf("3: 现金余额\n");
+    cmd = getCmd();
+    STATUS(*nextMenu)(User&);
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:
+        sortTimes();
+        break;
+    case 2:
+        sortTotal();
+        break;
+    case 3:
+        sortMoney();
+        break;
+    default:
+        printf("指令输入有误！\n");
+    }
     return EXIT;
 }
 STATUS doSendback(User& us) {
@@ -1213,6 +1246,67 @@ void listWallet(User& u) {
     cout << "用户【" << convGBK(u.username) << "】:" << endl
          << "礼券" << wallet["coupons"].get<float>() << "元" << endl
          << "现金" << wallet["money"].get<float>() << "元" << endl;
+}
+
+// 冒泡排序
+void sort(vector<ToSort>& ts) {
+    for (int i = 0; i < ts.size(); i++) {
+        for (int j = ts.size() - 1; j > i; j--) {
+            if (ts[j].value > ts[j - 1].value) {
+                ToSort t;
+                t = ts[j];
+                ts[j] = ts[j - 1];
+                ts[j - 1] = t;
+            }
+        }
+    }
+}
+void sortTimes() {
+    vector<ToSort> ts;
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["auth"].get<int>() <= 1) {
+            ts.push_back(ToSort{ users[i]["username"].get<string>(), (float) users[i]["purchase_log"].size() });
+        }
+    }
+    sort(ts);
+    for (int i = 0; i < ts.size(); i++) {
+        cout << "用户：" << convGBK(ts[i].s) << ", 购买次数：" << (int) ts[i].value << endl;
+    }
+    system("pause");
+    cin.clear();
+}
+void sortTotal() {
+    vector<ToSort> ts;
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["auth"].get<int>() <= 1) {
+            float total = 0;
+            json& user = users[i];
+            for (int j = 0; j < user["purchase_log"].size(); j++) {
+                total += user["purchase_log"][j]["total"].get<float>();
+            }
+            ts.push_back(ToSort{ user["username"].get<string>(), total });
+        }
+    }
+    sort(ts);
+    for (int i = 0; i < ts.size(); i++) {
+        cout << "用户：" << convGBK(ts[i].s) << ", 消费金额：" << ts[i].value << endl;
+    }
+    system("pause");
+    cin.clear();
+}
+void sortMoney() {
+    vector<ToSort> ts;
+    for (int i = 0; i < users.size(); i++) {
+        if (users[i]["auth"].get<int>() <= 1) {
+            ts.push_back(ToSort{ users[i]["username"].get<string>(), users[i]["wallet"]["money"].get<float>() });
+        }
+    }
+    sort(ts);
+    for (int i = 0; i < ts.size(); i++) {
+        cout << "用户：" << convGBK(ts[i].s) << ", 现金余额：" << ts[i].value << endl;
+    }
+    system("pause");
+    cin.clear();
 }
 
 void loadUsers(json& u) {
