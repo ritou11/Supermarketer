@@ -53,6 +53,8 @@ vector<Point> findAllGoods(string value, string field);
 void listUsers();
 void listGoods(int bi);
 void listBranches(bool all);
+void listLogs(User& u);
+void listCart(User& u);
 
 void loadUsers(json& u);
 void loadGoods(vector<json>& g);
@@ -97,9 +99,13 @@ STATUS doStopBranch(User& us);
 STATUS doBuy(User& us);
 STATUS doSearch(User& us);
 
-STATUS menuPay(User& us);
-STATUS menuDelete(User& us);
-STATUS menuAdjust(User& us);
+STATUS doPay(User& us);
+STATUS doDelete(User& us);
+STATUS doAdjust(User& us);
+
+STATUS doTopup(User& us);
+STATUS doRank(User& us);
+STATUS doSendback(User& us);
 
 // 使用函数指针，简化相似的菜单操作
 STATUS(*adminMenus[])(User&) = { menuYHGL, menuSPGL, menuKCGL, menuFDGL };
@@ -109,8 +115,9 @@ STATUS(*yhglMenus[])(User&) = { doAddUser, doDeleteUser, doEditPwd };
 STATUS(*spglMenus[])(User&) = { doAddGoods ,doDownGoods ,doEditGoods ,doBranchGoods };
 STATUS(*kcglMenus[])(User&) = { doAddStorage, doClearStorage, doCheckStorage };
 STATUS(*fdglMenus[])(User&) = { doAddBranch , doStopBranch };
-STATUS(*gucMenus[])(User&) = { menuPay , menuDelete , menuAdjust };
 STATUS(*scMenus[])(User&) = { doBuy , doSearch };
+STATUS(*gucMenus[])(User&) = { doPay , doDelete , doAdjust };
+STATUS(*qbMenus[])(User&) = { doTopup, doRank, doSendback };
 
 // 主函数，程序入口点
 int main()
@@ -334,9 +341,8 @@ STATUS menuConsumer(User& us) {
     printf("1: 市场\n");
     printf("2: 购物车\n");
     printf("3: 钱包\n");
-
+    printf("4: 记录\n");
     cmd = getCmd();
-
     STATUS(*nextMenu)(User&);
     switch (cmd) {
     case 0://Logout
@@ -350,6 +356,9 @@ STATUS menuConsumer(User& us) {
             if (s == EXIT) break;
         }
         break;
+    case 4:
+        listLogs(us);
+        system("pause");
     default:
         printf("指令输入有误！\n");
     }
@@ -491,11 +500,32 @@ STATUS menuSC(User& us) {
         printf("指令输入有误！\n");
     }
     return LOOP;
-
 }
 STATUS menuGUC(User& us) {
-    // TODO cart
-    return EXIT;
+    int cmd = -1;
+    printf("--购物车--\n");
+    listCart(us);
+    printf("0: 返回\n");
+    printf("1: 付款\n");
+    printf("2: 删除\n");
+    printf("3: 调整\n");
+    cmd = getCmd();
+    STATUS(*nextMenu)(User&);
+    switch (cmd) {
+    case 0:
+        return EXIT;
+    case 1:case 2:case 3:
+        nextMenu = gucMenus[cmd - 1];
+        while (1) {
+            // 下一级菜单
+            STATUS s = nextMenu(us);
+            if (s == EXIT) break;
+        }
+        break;
+    default:
+        printf("指令输入有误！\n");
+    }
+    return LOOP;
 }
 STATUS menuQB(User& us) {
     // TODO wallet
@@ -832,7 +862,7 @@ STATUS doBuy(User& us) {
         return EXIT;
     }
     float price = goods[gp.i][gp.j]["price"].get<float>();
-    cout << "亲要买几个呢？：" << endl;
+    cout << "亲要买几个呢？：";
     int goodCnt;
     cin >> goodCnt;
     if (goodCnt < 0) {
@@ -906,13 +936,114 @@ STATUS doSearch(User& us) {
     return EXIT;
 }
 
-STATUS menuPay(User& us) {
+STATUS doPay(User& us) {
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+    float money = users[uid]["wallet"]["money"].get<float>() , coupons = users[uid]["wallet"]["coupons"].get<float>();
+    json cart = users[uid]["cart"];
+
+    cout << "----付款----" << endl;
+    cout << "请输入您要付款的订单编号：";
+    int cid = getCmd();
+    if (cid < 0 || cid >= cart.size()) {
+        cout << "编号有误！" << endl;
+        return EXIT;
+    }
+    string id = cart[cid]["id"].get<string>();
+    Point gp;
+    gp = findGoods(id, "id");
+    if (gp.i < 0 || gp.j < 0 || goods[gp.i][gp.j]["avaliable"].get<bool>() == false) {
+        cout << "商品下架啦~" << endl;
+        return EXIT;
+    }
+    json good = goods[gp.i][gp.j];
+    float price = good["price"].get<float>();
+    int num = cart[cid]["num"].get<int>();
+    if (num*price > coupons + money) {
+        cout << "钱包太瘪了哦~请前去充值！" << endl;
+        return EXIT;
+    }
+    cout << "购买【"<< convGBK(good["name"].get<string>()) <<"】，合计【"<< num*price <<"】元，确认付款吗？(0:取消，1:确认)" << endl;
+    int cmd = getCmd();
+    if (cmd != 1) {
+        cout << "放弃付款！" << endl;
+        return EXIT;
+    }
+
+    if (coupons >= num*price) {
+        coupons -= num*price;
+    }
+    else {
+        money -= num*price - coupons;
+        coupons = 0;
+    }
+
+    users[uid]["wallet"]["money"] = money;
+    users[uid]["wallet"]["coupons"] = coupons;
+
+    users[uid]["cart"].erase(cid);
+    json log = {
+        {"id", id},
+        {"num", num},
+        {"total", num*price}
+    };
+    users[uid]["purchase_log"].push_back(log);
+
+    saveUsers(users);
     return EXIT;
 }
-STATUS menuDelete(User& us) {
+STATUS doDelete(User& us) {
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+    json cart = users[uid]["cart"];
+
+    cout << "----删除----" << endl;
+    cout << "请输入您要删除的订单编号：";
+    int cid = getCmd();
+    if (cid < 0 || cid >= cart.size()) {
+        cout << "编号有误！" << endl;
+        return EXIT;
+    }    
+    users[uid]["cart"].erase(cid);
+    saveUsers(users);
     return EXIT;
 }
-STATUS menuAdjust(User& us) {
+STATUS doAdjust(User& us) {
+    int uid = findUser(us.username);
+    if (uid < 0) return EXIT;
+    json cart = users[uid]["cart"];
+
+    cout << "----调整数量----" << endl;
+    cout << "请输入您要调整的订单编号：";
+    int cid = getCmd();
+    if (cid < 0 || cid >= cart.size()) {
+        cout << "编号有误！" << endl;
+        return EXIT;
+    }
+    cout << "亲要改成几个呢？：";
+    int goodCnt;
+    cin >> goodCnt;
+    if (goodCnt < 0) {
+        cout << "别淘气~我们不收货哦~" << endl;
+        return EXIT;
+    }
+    else if (goodCnt == 0) {
+        users[uid]["cart"].erase(cid);
+    }
+    else {
+        users[uid]["cart"][cid]["num"] = goodCnt;
+    }
+    saveUsers(users);
+    return EXIT;
+}
+
+STATUS doTopup(User& us) {
+    return EXIT;
+}
+STATUS doRank(User& us) {
+    return EXIT;
+}
+STATUS doSendback(User& us) {
     return EXIT;
 }
 
@@ -960,6 +1091,40 @@ void listBranches(bool all) {
         if (all) {
             cout << "状态：" << (branches[i]["open"].get<bool>() ? "营业" : "关停") << "||";
         }
+        cout << endl;
+    }
+}
+void listLogs(User& u) {
+    int uid = findUser(u.username);
+    if (uid < 0) return;
+    json logs = users[uid]["purchase_log"];
+    for (int i = 0; i < logs.size(); i++) {
+        string id = logs[i]["id"].get<string>();
+        Point p = findGoods(id, "id");
+        if (p.i < 0 || p.j < 0) continue;
+        cout << "||";
+        cout << "单号：" << i << "||";
+        cout << "商品编号：" << convGBK(id) << "||";
+        cout << "商品名称：" << convGBK(goods[p.i][p.j]["name"].get<string>()) << "||";
+        cout << "购买数量：" << logs[i]["num"].get<int>() << "||";
+        cout << "总价：" << logs[i]["total"].get<float>() << "||";
+        cout << endl;
+    }
+}
+void listCart(User& u) {
+    int uid = findUser(u.username);
+    if (uid < 0) return;
+    json cart = users[uid]["cart"];
+    for (int i = 0; i < cart.size(); i++) {
+        string id = cart[i]["id"].get<string>();
+        Point p = findGoods(id, "id");
+        if (p.i < 0 || p.j < 0) continue;
+        cout << "||";
+        cout << "单号：" << i << "||";
+        cout << "商品编号：" << convGBK(id) << "||";
+        cout << "商品名称：" << convGBK(goods[p.i][p.j]["name"].get<string>()) << "||";
+        cout << "购买数量：" << cart[i]["num"].get<int>() << "||";
+        cout << "总价：" << cart[i]["num"].get<int>() * goods[p.i][p.j]["price"].get<float>() << "||";
         cout << endl;
     }
 }
